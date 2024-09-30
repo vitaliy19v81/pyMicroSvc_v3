@@ -2,7 +2,6 @@ import asyncio
 import logging
 import os
 
-# from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine,AsyncEngine, AsyncSession #, async_sessionmaker
@@ -23,11 +22,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 SQLALCHEMY_DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URL")
-
-# синхронные функции
-# engine = create_engine(DATABASE_URL)
-# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-# Base = declarative_base()
 
 # Создаем асинхронный движок
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
@@ -57,21 +51,6 @@ async def init_db():
             await conn.run_sync(Base.metadata.create_all)
         finally:
             await conn.close()  # Гарантированное закрытие соединения
-
-# # Функция для проверки готовности базы данных
-# async def check_db_ready():
-#     while True:
-#         try:
-#             # await init_db()
-#             async with engine.connect() as conn:
-#                 await conn.execute(text("SELECT 1"))  # Тестовое подключение
-#             logger.info("База данных готова.")
-#             break
-#         except OperationalError:
-#             logger.info("PostgreSQL недоступен, ждем...")
-#             await asyncio.sleep(2)  # Асинхронное ожидание перед повторной попыткой
-#         finally:
-#             await engine.dispose()  # Гарантированное закрытие соединения
 
 # Функция для проверки готовности базы данных с тайм-аутом
 async def check_db_ready(engine: AsyncEngine, timeout: int = 30, retry_interval: int = 2):
