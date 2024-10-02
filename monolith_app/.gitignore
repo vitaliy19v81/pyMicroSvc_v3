@@ -1,11 +1,13 @@
 microsvc/
+.env
 .env.dev
 .env.dev1
 .env.prod
 .env.prod1
 config.py
-docker-compose.dev.yml
+docker-compose.dev1.yml
 docker-compose.prod.yml
+requirements.sinchron.txt
 monolith_app/config/
 
 # Byte-compiled / optimized / DLL files

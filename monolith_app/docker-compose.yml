@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./app/Dockerfile
+    env_file:
+      - ./.env
+    volumes:
+      - ./app:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - kafka
+    restart: always
+
+  db:
+    image: postgres:13
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "${ZOOKEEPER_EXTERNAL_PORT}:2181"
+    environment:
+      ZOO_TICK_TIME: "${ZOOKEEPER_TICK_TIME}"
+      ZOO_INIT_LIMIT: "${ZOOKEEPER_INIT_LIMIT}"
+      ZOO_SYNC_LIMIT: "${ZOOKEEPER_SYNC_LIMIT}"
+      ZOO_MAX_SESSION_TIMEOUT: "${ZOOKEEPER_MAX_SESSION_TIMEOUT}"
+      ZOO_MAX_CLIENT_CNXNS: "${ZOOKEEPER_MAX_CLIENT_CNXNS}"
+      ZOO_AUTOPURGE_PURGEINTERVAL: "${ZOOKEEPER_AUTOPURGE_PURGEINTERVAL}"
+      ZOO_AUTOPURGE_SNAPRETAINCOUNT: "${ZOOKEEPER_AUTOPURGE_SNAPRETAINCOUNT}"
+      ZOO_SNAPCOUNT: "${ZOOKEEPER_SNAPCOUNT}"
+      ZOO_4LW_COMMANDS_WHITELIST: "${ZOOKEEPER_4LW_COMMANDS_WHITELIST}"
+    volumes:
+      - zookeeper_data:/data
+      - zookeeper_logs:/datalog
+    restart: always
+
+  kafka:
+    image: wurstmeister/kafka:2.13-2.7.0
+    ports:
+      - "${KAFKA_EXTERNAL_PORT}:9092"
+    env_file:
+      - ./.env
+    depends_on:
+      - zookeeper
+    volumes:
+      - kafka_data:/kafka
+    restart: always
+    healthcheck:
+      test: [ "CMD", "sh", "-c", "echo 'ping' | nc kafka 9093" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  kafka_data:
+  zookeeper_data:
+  zookeeper_logs:
